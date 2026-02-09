@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { supabase, getRegistrations, deleteAllRegistrations, getSettings, setRegistrationsOpen } from '../lib/supabase'
-import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, AlignmentType, HeadingLevel } from 'docx'
+import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import './Dashboard.css'
 
@@ -72,7 +72,7 @@ function Dashboard() {
         setActionLoading('')
     }
 
-    const handleExportDocx = async () => {
+    const handleExportExcel = () => {
         if (registrations.length === 0) {
             showMessage('No registrations to export', 'error')
             return
@@ -80,73 +80,33 @@ function Dashboard() {
 
         setActionLoading('export')
         try {
-            const tableRows = [
-                // Header row
-                new TableRow({
-                    children: ['S.No', 'Full Name', 'Reg Number', 'Dept', 'Section', 'Email', 'Mobile'].map(text =>
-                        new TableCell({
-                            children: [new Paragraph({
-                                children: [new TextRun({ text, bold: true })],
-                                alignment: AlignmentType.CENTER
-                            })],
-                            shading: { fill: '9B8FCE' }
-                        })
-                    )
-                }),
-                // Data rows
-                ...registrations.map((reg, index) =>
-                    new TableRow({
-                        children: [
-                            String(index + 1),
-                            reg.full_name,
-                            reg.reg_number,
-                            reg.dept || '',
-                            reg.section,
-                            reg.email,
-                            reg.mobile
-                        ].map(text =>
-                            new TableCell({
-                                children: [new Paragraph({ text: text || '' })]
-                            })
-                        )
-                    })
-                )
-            ]
+            // Prepare data for Excel
+            const excelData = registrations.map((reg, index) => ({
+                'S.No': index + 1,
+                'Full Name': reg.full_name,
+                'Reg Number': reg.reg_number,
+                'Department': reg.dept || '',
+                'Section': reg.section,
+                'Email': reg.email,
+                'Mobile': reg.mobile,
+                'Registered At': new Date(reg.created_at).toLocaleString()
+            }))
 
-            const doc = new Document({
-                sections: [{
-                    properties: {},
-                    children: [
-                        new Paragraph({
-                            text: 'CREATEVERSE - Registration List',
-                            heading: HeadingLevel.HEADING_1,
-                            alignment: AlignmentType.CENTER
-                        }),
-                        new Paragraph({
-                            text: `Campus Creative Club Launch Event`,
-                            alignment: AlignmentType.CENTER
-                        }),
-                        new Paragraph({
-                            text: `Generated on: ${new Date().toLocaleString()}`,
-                            alignment: AlignmentType.CENTER
-                        }),
-                        new Paragraph({ text: '' }),
-                        new Table({
-                            width: { size: 100, type: WidthType.PERCENTAGE },
-                            rows: tableRows
-                        }),
-                        new Paragraph({ text: '' }),
-                        new Paragraph({
-                            text: `Total Registrations: ${registrations.length}`,
-                            alignment: AlignmentType.RIGHT
-                        })
-                    ]
-                }]
-            })
+            // Create workbook and worksheet
+            const worksheet = XLSX.utils.json_to_sheet(excelData)
+            const workbook = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations')
 
-            const blob = await Packer.toBlob(doc)
-            saveAs(blob, `CREATEVERSE_Registrations_${new Date().toISOString().split('T')[0]}.docx`)
-            showMessage('DOCX exported successfully')
+            // Auto-size columns
+            const maxWidth = 20
+            worksheet['!cols'] = Object.keys(excelData[0] || {}).map(() => ({ wch: maxWidth }))
+
+            // Generate Excel file
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+            const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+            saveAs(blob, `CREATEVERSE_Registrations_${new Date().toISOString().split('T')[0]}.xlsx`)
+
+            showMessage('Excel exported successfully')
         } catch (error) {
             showMessage('Export failed: ' + error.message, 'error')
         }
@@ -209,10 +169,10 @@ function Dashboard() {
 
                     <button
                         className="action-btn export"
-                        onClick={handleExportDocx}
+                        onClick={handleExportExcel}
                         disabled={actionLoading === 'export'}
                     >
-                        {actionLoading === 'export' ? '...' : '📄 Export DOCX'}
+                        {actionLoading === 'export' ? '...' : '📊 Export Excel'}
                     </button>
 
                     <button
