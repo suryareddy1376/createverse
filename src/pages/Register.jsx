@@ -10,6 +10,7 @@ function Register() {
     const [formData, setFormData] = useState({
         fullName: '',
         regNumber: '',
+        dept: '',
         section: '',
         email: '',
         mobile: ''
@@ -44,6 +45,8 @@ function Register() {
                 return value.trim() ? '' : 'Full name is required'
             case 'regNumber':
                 return value.trim() ? '' : 'Registration number is required'
+            case 'dept':
+                return value.trim() ? '' : 'Department is required'
             case 'section':
                 return value.trim() ? '' : 'Section is required'
             case 'email':
@@ -88,6 +91,7 @@ function Register() {
         setTouched({
             fullName: true,
             regNumber: true,
+            dept: true,
             section: true,
             email: true,
             mobile: true
@@ -111,6 +115,7 @@ function Register() {
             setFormData({
                 fullName: '',
                 regNumber: '',
+                dept: '',
                 section: '',
                 email: '',
                 mobile: ''
@@ -126,7 +131,8 @@ function Register() {
 
     const fields = [
         { name: 'fullName', label: 'Full Name', type: 'text', placeholder: 'Enter your full name' },
-        { name: 'regNumber', label: 'Registration Number', type: 'text', placeholder: '11-digit registration number' },
+        { name: 'regNumber', label: 'Registration Number', type: 'text', placeholder: 'Enter your registration number' },
+        { name: 'dept', label: 'Department', type: 'text', placeholder: 'e.g., CSE, ECE, MECH' },
         { name: 'section', label: 'Section', type: 'text', placeholder: 'Enter your section' },
         { name: 'email', label: 'Email ID', type: 'email', placeholder: 'Enter your email address' },
         { name: 'mobile', label: 'Mobile / WhatsApp Number', type: 'tel', placeholder: '10-digit mobile number' }

@@ -12,6 +12,7 @@ export async function submitRegistration(data) {
         .insert([{
             full_name: data.fullName,
             reg_number: data.regNumber,
+            dept: data.dept,
             section: data.section,
             email: data.email,
             mobile: data.mobile,

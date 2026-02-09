@@ -83,7 +83,7 @@ function Dashboard() {
             const tableRows = [
                 // Header row
                 new TableRow({
-                    children: ['S.No', 'Full Name', 'Reg Number', 'Section', 'Email', 'Mobile'].map(text =>
+                    children: ['S.No', 'Full Name', 'Reg Number', 'Dept', 'Section', 'Email', 'Mobile'].map(text =>
                         new TableCell({
                             children: [new Paragraph({
                                 children: [new TextRun({ text, bold: true })],
@@ -100,6 +100,7 @@ function Dashboard() {
                             String(index + 1),
                             reg.full_name,
                             reg.reg_number,
+                            reg.dept || '',
                             reg.section,
                             reg.email,
                             reg.mobile
@@ -251,6 +252,7 @@ function Dashboard() {
                                     <th>S.No</th>
                                     <th>Full Name</th>
                                     <th>Reg Number</th>
+                                    <th>Dept</th>
                                     <th>Section</th>
                                     <th>Email</th>
                                     <th>Mobile</th>
@@ -263,6 +265,7 @@ function Dashboard() {
                                         <td>{index + 1}</td>
                                         <td>{reg.full_name}</td>
                                         <td>{reg.reg_number}</td>
+                                        <td>{reg.dept || '-'}</td>
                                         <td>{reg.section}</td>
                                         <td>{reg.email}</td>
                                         <td>{reg.mobile}</td>
