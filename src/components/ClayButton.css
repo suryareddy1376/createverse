@@ -1,0 +1,89 @@
+.clay-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    font-family: var(--font-family);
+    font-weight: 600;
+    color: var(--text-white);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    border: none;
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-clay);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.clay-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
+    border-radius: var(--radius-full) var(--radius-full) 50% 50%;
+    pointer-events: none;
+}
+
+/* Sizes */
+.clay-btn--default {
+    padding: var(--space-md) var(--space-xl);
+    font-size: var(--font-size-md);
+}
+
+.clay-btn--large {
+    padding: var(--space-lg) var(--space-2xl);
+    font-size: var(--font-size-lg);
+}
+
+.clay-btn--small {
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-size-sm);
+}
+
+/* States */
+.clay-btn:hover {
+    box-shadow: var(--shadow-clay-hover);
+}
+
+.clay-btn:active {
+    box-shadow: var(--shadow-clay-pressed);
+}
+
+.clay-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Loading */
+.clay-btn--loading .btn-text-hidden {
+    opacity: 0;
+}
+
+.clay-btn .spinner {
+    position: absolute;
+}
+
+/* Glow animation */
+.clay-btn--glow {
+    animation: button-glow 6s ease-in-out infinite;
+}
+
+@keyframes button-glow {
+
+    0%,
+    100% {
+        box-shadow: var(--shadow-clay);
+    }
+
+    50% {
+        box-shadow:
+            var(--shadow-clay),
+            0 0 20px rgba(155, 143, 206, 0.5),
+            0 0 40px rgba(155, 143, 206, 0.3);
+    }
+}

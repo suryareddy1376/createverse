@@ -1,0 +1,50 @@
+.clay-card-component {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-clay);
+    padding: var(--space-xl);
+    transition: box-shadow var(--transition-normal);
+}
+
+.clay-card-component:hover {
+    box-shadow: var(--shadow-clay-hover);
+}
+
+.clay-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-md);
+    text-align: center;
+}
+
+.clay-card-title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: var(--space-sm);
+    text-align: center;
+}
+
+.clay-card-content {
+    color: var(--text-medium);
+    text-align: center;
+}
+
+.clay-card-content p {
+    margin: var(--space-xs) 0;
+}
+
+.clay-card-content strong {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .clay-card-component {
+        padding: var(--space-lg);
+    }
+
+    .clay-card-component:hover {
+        box-shadow: var(--shadow-clay);
+    }
+}
