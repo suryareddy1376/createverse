@@ -13,6 +13,7 @@ export async function submitRegistration(data) {
             full_name: data.fullName,
             reg_number: data.regNumber,
             dept: data.dept,
+            year: data.year,
             section: data.section,
             email: data.email,
             mobile: data.mobile,
@@ -63,4 +64,43 @@ export async function setRegistrationsOpen(isOpen) {
         }, { onConflict: 'key' })
 
     if (error) throw error
+}
+
+// Registration limit functions
+export async function getRegistrationLimit() {
+    const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'registration_limit')
+        .single()
+
+    if (error && error.code !== 'PGRST116') throw error
+    return parseInt(data?.value || '0', 10) // 0 means unlimited
+}
+
+export async function setRegistrationLimit(limit) {
+    const { error } = await supabase
+        .from('settings')
+        .upsert({
+            key: 'registration_limit',
+            value: limit.toString()
+        }, { onConflict: 'key' })
+
+    if (error) throw error
+}
+
+export async function checkCanRegister() {
+    const [limit, registrations] = await Promise.all([
+        getRegistrationLimit(),
+        getRegistrations()
+    ])
+
+    // 0 means unlimited
+    if (limit === 0) return { canRegister: true, currentCount: registrations.length, limit: 0 }
+
+    return {
+        canRegister: registrations.length < limit,
+        currentCount: registrations.length,
+        limit
+    }
 }

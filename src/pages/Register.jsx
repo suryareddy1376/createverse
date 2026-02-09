@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import ClayButton from '../components/ClayButton'
 import SuccessModal from '../components/SuccessModal'
-import { submitRegistration, getSettings } from '../lib/supabase'
+import { submitRegistration, getSettings, checkCanRegister } from '../lib/supabase'
 import './Register.css'
 
 function Register() {
@@ -11,6 +11,7 @@ function Register() {
         fullName: '',
         regNumber: '',
         dept: '',
+        year: '',
         section: '',
         email: '',
         mobile: ''
@@ -21,6 +22,8 @@ function Register() {
     const [loading, setLoading] = useState(false)
     const [showSuccess, setShowSuccess] = useState(false)
     const [registrationsOpen, setRegistrationsOpen] = useState(true)
+    const [limitReached, setLimitReached] = useState(false)
+    const [limitInfo, setLimitInfo] = useState({ currentCount: 0, limit: 0 })
     const [checkingStatus, setCheckingStatus] = useState(true)
 
     useEffect(() => {
@@ -29,8 +32,13 @@ function Register() {
 
     const checkRegistrationStatus = async () => {
         try {
-            const isOpen = await getSettings()
+            const [isOpen, canRegisterInfo] = await Promise.all([
+                getSettings(),
+                checkCanRegister()
+            ])
             setRegistrationsOpen(isOpen)
+            setLimitReached(!canRegisterInfo.canRegister)
+            setLimitInfo({ currentCount: canRegisterInfo.currentCount, limit: canRegisterInfo.limit })
         } catch (error) {
             console.error('Failed to check registration status:', error)
             // Default to open if we can't check
@@ -47,6 +55,8 @@ function Register() {
                 return value.trim() ? '' : 'Registration number is required'
             case 'dept':
                 return value.trim() ? '' : 'Department is required'
+            case 'year':
+                return value.trim() ? '' : 'Year is required'
             case 'section':
                 return value.trim() ? '' : 'Section is required'
             case 'email':
@@ -92,6 +102,7 @@ function Register() {
             fullName: true,
             regNumber: true,
             dept: true,
+            year: true,
             section: true,
             email: true,
             mobile: true
@@ -116,6 +127,7 @@ function Register() {
                 fullName: '',
                 regNumber: '',
                 dept: '',
+                year: '',
                 section: '',
                 email: '',
                 mobile: ''
@@ -133,6 +145,7 @@ function Register() {
         { name: 'fullName', label: 'Full Name', type: 'text', placeholder: 'Enter your full name' },
         { name: 'regNumber', label: 'Registration Number', type: 'text', placeholder: 'Enter your registration number' },
         { name: 'dept', label: 'Department', type: 'text', placeholder: 'e.g., CSE, ECE, MECH' },
+        { name: 'year', label: 'Year', type: 'text', placeholder: 'e.g., 1, 2, 3, 4' },
         { name: 'section', label: 'Section', type: 'text', placeholder: 'Enter your section' },
         { name: 'email', label: 'Email ID', type: 'email', placeholder: 'Enter your email address' },
         { name: 'mobile', label: 'Mobile / WhatsApp Number', type: 'tel', placeholder: '10-digit mobile number' }
@@ -166,6 +179,29 @@ function Register() {
                             <span className="closed-icon">🔒</span>
                             <h2>Registrations Closed</h2>
                             <p>Sorry, registrations for CREATEVERSE are currently closed. Please check back later!</p>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+        )
+    }
+
+    if (limitReached) {
+        return (
+            <div className="register-page">
+                <div className="container">
+                    <motion.div
+                        className="register-card closed-card"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <Link to="/" className="back-link">
+                            ← Back to Home
+                        </Link>
+                        <div className="closed-message">
+                            <span className="closed-icon">📊</span>
+                            <h2>Registrations Full</h2>
+                            <p>We've reached the maximum limit of {limitInfo.limit} registrations. Thank you for your interest in CREATEVERSE!</p>
                         </div>
                     </motion.div>
                 </div>

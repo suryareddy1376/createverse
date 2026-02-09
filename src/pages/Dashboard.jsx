@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { supabase, getRegistrations, deleteAllRegistrations, getSettings, setRegistrationsOpen } from '../lib/supabase'
+import { supabase, getRegistrations, deleteAllRegistrations, getSettings, setRegistrationsOpen, getRegistrationLimit, setRegistrationLimit } from '../lib/supabase'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import './Dashboard.css'
@@ -11,6 +11,8 @@ function Dashboard() {
     const [registrations, setRegistrations] = useState([])
     const [loading, setLoading] = useState(true)
     const [isOpen, setIsOpen] = useState(true)
+    const [registrationLimit, setRegLimit] = useState(0)
+    const [limitInput, setLimitInput] = useState('')
     const [actionLoading, setActionLoading] = useState('')
     const [message, setMessage] = useState({ text: '', type: '' })
 
@@ -21,12 +23,15 @@ function Dashboard() {
     const loadData = async () => {
         setLoading(true)
         try {
-            const [regs, openStatus] = await Promise.all([
+            const [regs, openStatus, limit] = await Promise.all([
                 getRegistrations(),
-                getSettings()
+                getSettings(),
+                getRegistrationLimit()
             ])
             setRegistrations(regs || [])
             setIsOpen(openStatus)
+            setRegLimit(limit)
+            setLimitInput(limit.toString())
         } catch (error) {
             showMessage('Failed to load data: ' + error.message, 'error')
         }
@@ -86,6 +91,7 @@ function Dashboard() {
                 'Full Name': reg.full_name,
                 'Reg Number': reg.reg_number,
                 'Department': reg.dept || '',
+                'Year': reg.year || '',
                 'Section': reg.section,
                 'Email': reg.email,
                 'Mobile': reg.mobile,
@@ -116,6 +122,23 @@ function Dashboard() {
     const handleLogout = async () => {
         await supabase.auth.signOut()
         navigate('/login')
+    }
+
+    const handleUpdateLimit = async () => {
+        const newLimit = parseInt(limitInput, 10)
+        if (isNaN(newLimit) || newLimit < 0) {
+            showMessage('Please enter a valid number (0 for unlimited)', 'error')
+            return
+        }
+        setActionLoading('limit')
+        try {
+            await setRegistrationLimit(newLimit)
+            setRegLimit(newLimit)
+            showMessage(`Registration limit ${newLimit === 0 ? 'removed (unlimited)' : `set to ${newLimit}`}`)
+        } catch (error) {
+            showMessage('Failed to update limit: ' + error.message, 'error')
+        }
+        setActionLoading('')
     }
 
     return (
@@ -191,8 +214,27 @@ function Dashboard() {
                     transition={{ delay: 0.3 }}
                 >
                     <span className="stat">
-                        <strong>{registrations.length}</strong> Total Registrations
+                        <strong>{registrations.length}</strong>
+                        {registrationLimit > 0 ? ` / ${registrationLimit}` : ''} Registrations
                     </span>
+                    <div className="limit-control">
+                        <label>Max Limit:</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={limitInput}
+                            onChange={(e) => setLimitInput(e.target.value)}
+                            placeholder="0 = unlimited"
+                            className="limit-input"
+                        />
+                        <button
+                            className="action-btn limit"
+                            onClick={handleUpdateLimit}
+                            disabled={actionLoading === 'limit'}
+                        >
+                            {actionLoading === 'limit' ? '...' : '💾 Set Limit'}
+                        </button>
+                    </div>
                 </motion.div>
 
                 <motion.div
@@ -213,6 +255,7 @@ function Dashboard() {
                                     <th>Full Name</th>
                                     <th>Reg Number</th>
                                     <th>Dept</th>
+                                    <th>Year</th>
                                     <th>Section</th>
                                     <th>Email</th>
                                     <th>Mobile</th>
@@ -226,6 +269,7 @@ function Dashboard() {
                                         <td>{reg.full_name}</td>
                                         <td>{reg.reg_number}</td>
                                         <td>{reg.dept || '-'}</td>
+                                        <td>{reg.year || '-'}</td>
                                         <td>{reg.section}</td>
                                         <td>{reg.email}</td>
                                         <td>{reg.mobile}</td>
