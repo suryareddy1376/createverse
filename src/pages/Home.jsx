@@ -80,30 +80,45 @@ function Home() {
                             CREATEVERSE
                         </motion.h1>
 
+                        <motion.h2
+                            className="hero-club-name"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.5, duration: 0.7 }}
+                        >
+                            <span className="rainbow-text">Campus Creative Club</span>
+                        </motion.h2>
+
                         <motion.p
                             className="hero-subtitle"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            transition={{ delay: 0.5, duration: 0.6 }}
+                            transition={{ delay: 0.7, duration: 0.6 }}
                         >
-                            Campus Creative Club Launch Event
+                            Launch Event
                         </motion.p>
 
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.7, duration: 0.5 }}
+                            transition={{ delay: 0.9, duration: 0.5 }}
                         >
-                            <ClayButton to="/register" size="large">
-                                Register Now
-                            </ClayButton>
+                            <button
+                                className="explore-btn"
+                                onClick={() => document.getElementById('event-details').scrollIntoView({ behavior: 'smooth' })}
+                            >
+                                <span>Explore Event</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M12 5v14M19 12l-7 7-7-7" />
+                                </svg>
+                            </button>
                         </motion.div>
                     </motion.div>
                 </div>
             </section>
 
             {/* Event Details Section */}
-            <section className="section event-details">
+            <section id="event-details" className="section event-details">
                 <div className="container">
                     <motion.h2
                         className="section-title"

@@ -33,6 +33,31 @@
 .success-modal p {
     color: var(--text-medium);
     font-size: var(--font-size-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.whatsapp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #25D366;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+    transition: all 0.3s ease;
+}
+
+.whatsapp-btn:hover {
+    background: #1DA851;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
 }
 
 .success-icon {

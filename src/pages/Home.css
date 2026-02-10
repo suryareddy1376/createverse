@@ -83,11 +83,115 @@
     line-height: 1;
 }
 
+.hero-club-name {
+    font-family: 'To The Point', sans-serif;
+    font-size: clamp(2.2rem, 9vw, 4.2rem);
+    font-weight: 700;
+    margin-bottom: var(--space-sm);
+    line-height: 1.2;
+    position: relative;
+    display: inline-block;
+}
+
+/* Rainbow border on hover/click */
+.rainbow-text {
+    color: #1a1a1a;
+    display: inline-block;
+    padding: 4px 16px;
+    border-radius: 12px;
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    position: relative;
+}
+
+.rainbow-text:hover,
+.rainbow-text:active {
+    border-image: linear-gradient(90deg,
+            #4285f4,
+            #9b72cb,
+            #d96570,
+            #fcc934,
+            #31a952,
+            #4285f4) 1;
+    border-image-slice: 1;
+    animation: rainbow-border-shimmer 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(155, 100, 255, 0.25)) drop-shadow(0 0 24px rgba(100, 180, 255, 0.1));
+}
+
+@keyframes rainbow-border-shimmer {
+    0% {
+        filter: drop-shadow(0 0 12px rgba(66, 133, 244, 0.4));
+    }
+
+    25% {
+        filter: drop-shadow(0 0 12px rgba(155, 114, 203, 0.4));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 12px rgba(217, 101, 112, 0.4));
+    }
+
+    75% {
+        filter: drop-shadow(0 0 12px rgba(252, 201, 52, 0.4));
+    }
+
+    100% {
+        filter: drop-shadow(0 0 12px rgba(49, 169, 82, 0.4));
+    }
+}
+
 .hero-subtitle {
     font-size: var(--font-size-xl);
     color: #1a1a1a;
     margin-bottom: var(--space-2xl);
     font-weight: 500;
+}
+
+/* Explore Event Button */
+.explore-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 36px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #9b8fce, #7c6db5);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow:
+        6px 6px 14px rgba(155, 143, 206, 0.35),
+        -3px -3px 10px rgba(255, 255, 255, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: all 0.3s ease;
+    letter-spacing: 0.3px;
+}
+
+.explore-btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        8px 8px 18px rgba(155, 143, 206, 0.45),
+        -4px -4px 12px rgba(255, 255, 255, 0.9),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.explore-btn svg {
+    animation: bounce-down 1.5s ease-in-out infinite;
+}
+
+@keyframes bounce-down {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(4px);
+    }
 }
 
 /* ===== SECTION STYLES ===== */
@@ -244,6 +348,10 @@
 @media (min-width: 1024px) {
     .hero-title {
         font-size: 5rem;
+    }
+
+    .hero-club-name {
+        font-size: 4.5rem;
     }
 
     .hero-subtitle {
