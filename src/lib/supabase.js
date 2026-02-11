@@ -105,14 +105,14 @@ export async function setRegistrationLimit(limit) {
     if (error) throw error
 }
 
-// Count-only query — does NOT expose any registration data
-export async function getRegistrationCount() {
-    const { count, error } = await supabase
-        .from('registrations')
-        .select('*', { count: 'exact', head: true })
+// BEFORE (exposes rows to anon):
+// .select('*', { count: 'exact', head: true })
 
+// AFTER (calls the secure function — returns count only):
+export async function getRegistrationCount() {
+    const { data, error } = await supabase.rpc('get_registration_count')
     if (error) throw error
-    return count || 0
+    return data || 0
 }
 
 export async function checkCanRegister() {
