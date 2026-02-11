@@ -53,6 +53,17 @@
     color: #c62828;
 }
 
+.dashboard-header .header-actions {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.action-btn.attendance-nav {
+    background: linear-gradient(135deg, #26A69A 0%, #00897B 100%);
+    color: white;
+}
+
 /* Message */
 .message {
     padding: var(--space-md) var(--space-lg);

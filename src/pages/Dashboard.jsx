@@ -153,9 +153,14 @@ function Dashboard() {
                         <h1>CREATEVERSE Admin</h1>
                         <p>Manage event registrations</p>
                     </div>
-                    <button className="logout-btn" onClick={handleLogout}>
-                        🚪 Logout
-                    </button>
+                    <div className="header-actions">
+                        <button className="action-btn attendance-nav" onClick={() => navigate('/attendance')}>
+                            📷 Attendance
+                        </button>
+                        <button className="logout-btn" onClick={handleLogout}>
+                            🚪 Logout
+                        </button>
+                    </div>
                 </motion.div>
 
                 {message.text && (

@@ -130,3 +130,66 @@ export async function checkCanRegister() {
         limit
     }
 }
+
+// =====================================================
+// ATTENDANCE FUNCTIONS
+// =====================================================
+
+export async function lookupRegistration(regNumber) {
+    const { data, error } = await supabase
+        .from('registrations')
+        .select('full_name, reg_number, dept, year, section')
+        .eq('reg_number', regNumber)
+        .single()
+
+    if (error && error.code === 'PGRST116') return null // Not found
+    if (error) throw error
+    return data
+}
+
+export async function markAttendance(regNumber) {
+    // First look up the student
+    const student = await lookupRegistration(regNumber)
+    if (!student) {
+        throw new Error('NOT_FOUND')
+    }
+
+    // Mark attendance
+    const { data, error } = await supabase
+        .from('attendance')
+        .insert([{
+            reg_number: student.reg_number,
+            full_name: student.full_name,
+            dept: student.dept,
+            year: student.year,
+            section: student.section
+        }])
+        .select()
+
+    if (error) {
+        if (error.code === '23505') {
+            throw new Error('ALREADY_CHECKED_IN')
+        }
+        throw error
+    }
+    return { ...data[0], student }
+}
+
+export async function getAttendance() {
+    const { data, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .order('checked_in_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
+}
+
+export async function clearAttendance() {
+    const { error } = await supabase
+        .from('attendance')
+        .delete()
+        .neq('id', 0)
+
+    if (error) throw error
+}

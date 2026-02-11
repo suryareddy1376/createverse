@@ -1,0 +1,99 @@
+/* ===== BARCODE SCANNER STYLES ===== */
+
+.barcode-scanner-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.scanner-viewport {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-clay);
+    background: #000;
+}
+
+.scanner-viewport #barcode-scanner-region {
+    width: 100%;
+}
+
+.scanner-viewport #barcode-scanner-region video {
+    width: 100% !important;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+}
+
+/* Remove default html5-qrcode UI elements */
+.scanner-viewport #barcode-scanner-region img[alt="Info icon"] {
+    display: none !important;
+}
+
+.scanner-viewport #barcode-scanner-region #html5-qrcode-anchor-scan-type-change {
+    display: none !important;
+}
+
+.scanner-viewport #barcode-scanner-region select {
+    display: none !important;
+}
+
+/* Animated laser line */
+.scanner-laser {
+    position: absolute;
+    top: 30%;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #ff4444, #ff6666, #ff4444, transparent);
+    border-radius: 2px;
+    animation: laser-scan 2s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.6), 0 0 20px rgba(255, 68, 68, 0.3);
+    z-index: 10;
+    pointer-events: none;
+}
+
+@keyframes laser-scan {
+
+    0%,
+    100% {
+        top: 30%;
+        opacity: 0.8;
+    }
+
+    50% {
+        top: 65%;
+        opacity: 1;
+    }
+}
+
+.scanner-hint {
+    font-size: var(--font-size-sm);
+    color: var(--text-light);
+    text-align: center;
+    font-style: italic;
+}
+
+.scanner-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xl);
+    background: rgba(229, 115, 115, 0.1);
+    border: 1px solid rgba(229, 115, 115, 0.3);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.scanner-error-icon {
+    font-size: 2rem;
+}
+
+.scanner-error p {
+    color: #c62828;
+    font-size: var(--font-size-sm);
+}
