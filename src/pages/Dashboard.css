@@ -242,6 +242,49 @@
     color: var(--text-dark);
 }
 
+/* Present Column */
+.present-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.present-badge-btn {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(125, 211, 168, 0.2);
+    color: #2e7d32;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    border: 1px solid rgba(125, 211, 168, 0.5);
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: all var(--transition-normal);
+}
+
+.present-badge-btn:hover {
+    background: rgba(229, 115, 115, 0.15);
+    color: #c62828;
+    border-color: rgba(229, 115, 115, 0.5);
+}
+
+.present-badge-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.action-btn.mark-present-btn {
+    padding: 4px 12px;
+    font-size: var(--font-size-xs);
+    background: linear-gradient(135deg, #26A69A 0%, #00897B 100%);
+    color: white;
+    box-shadow: none;
+}
+
+.action-btn.mark-present-btn:hover {
+    box-shadow: 0 2px 8px rgba(38, 166, 154, 0.3);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .table-container {

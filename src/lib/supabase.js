@@ -135,11 +135,25 @@ export async function checkCanRegister() {
 // ATTENDANCE FUNCTIONS
 // =====================================================
 
+// Sanitise barcode / manual input:
+//  - cast to string, trim whitespace
+//  - strip BOM, null bytes, zero-width spaces, non-printable chars
+//  - collapse internal whitespace
+function sanitizeRegNumber(raw) {
+    return String(raw)
+        .trim()
+        .replace(/[\u0000-\u001F\u007F-\u009F\uFEFF\u200B-\u200D\u2060]/g, '') // invisible chars
+        .replace(/\s+/g, ' ')  // collapse whitespace
+        .trim()
+}
+
 export async function lookupRegistration(regNumber) {
+    const cleanRegNumber = sanitizeRegNumber(regNumber)
+    if (!cleanRegNumber) return null
     const { data, error } = await supabase
         .from('registrations')
         .select('full_name, reg_number, dept, year, section')
-        .eq('reg_number', regNumber)
+        .eq('reg_number', cleanRegNumber)
         .single()
 
     if (error && error.code === 'PGRST116') return null // Not found
@@ -148,8 +162,10 @@ export async function lookupRegistration(regNumber) {
 }
 
 export async function markAttendance(regNumber) {
+    const cleanRegNumber = sanitizeRegNumber(regNumber)
+    if (!cleanRegNumber) throw new Error('INVALID_INPUT')
     // First look up the student
-    const student = await lookupRegistration(regNumber)
+    const student = await lookupRegistration(cleanRegNumber)
     if (!student) {
         throw new Error('NOT_FOUND')
     }
@@ -183,6 +199,16 @@ export async function getAttendance() {
 
     if (error) throw error
     return data || []
+}
+
+export async function removeAttendance(regNumber) {
+    const cleanRegNumber = sanitizeRegNumber(regNumber)
+    const { error } = await supabase
+        .from('attendance')
+        .delete()
+        .eq('reg_number', cleanRegNumber)
+
+    if (error) throw error
 }
 
 export async function clearAttendance() {

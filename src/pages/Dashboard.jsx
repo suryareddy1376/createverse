@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { supabase, getRegistrations, deleteAllRegistrations, getSettings, setRegistrationsOpen, getRegistrationLimit, setRegistrationLimit } from '../lib/supabase'
+import { supabase, getRegistrations, deleteAllRegistrations, getSettings, setRegistrationsOpen, getRegistrationLimit, setRegistrationLimit, getAttendance, markAttendance, removeAttendance } from '../lib/supabase'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import './Dashboard.css'
@@ -15,6 +15,8 @@ function Dashboard() {
     const [limitInput, setLimitInput] = useState('')
     const [actionLoading, setActionLoading] = useState('')
     const [message, setMessage] = useState({ text: '', type: '' })
+    const [attendanceSet, setAttendanceSet] = useState(new Set())
+    const [markingPresent, setMarkingPresent] = useState('')
 
     useEffect(() => {
         loadData()
@@ -23,14 +25,16 @@ function Dashboard() {
     const loadData = async () => {
         setLoading(true)
         try {
-            const [regs, openStatus, limit] = await Promise.all([
+            const [regs, openStatus, limit, attendanceData] = await Promise.all([
                 getRegistrations(),
                 getSettings(),
-                getRegistrationLimit()
+                getRegistrationLimit(),
+                getAttendance()
             ])
             setRegistrations(regs || [])
             setIsOpen(openStatus)
             setRegLimit(limit)
+            setAttendanceSet(new Set((attendanceData || []).map(a => String(a.reg_number).trim())))
             setLimitInput(limit.toString())
         } catch (error) {
             showMessage('Failed to load data: ' + error.message, 'error')
@@ -95,6 +99,7 @@ function Dashboard() {
                 'Section': reg.section,
                 'Email': reg.email,
                 'Mobile': reg.mobile,
+                'Present': attendanceSet.has(String(reg.reg_number).trim()) ? 'Yes' : 'No',
                 'Registered At': new Date(reg.created_at).toLocaleString()
             }))
 
@@ -122,6 +127,41 @@ function Dashboard() {
     const handleLogout = async () => {
         await supabase.auth.signOut()
         navigate('/login')
+    }
+
+    const handleMarkPresent = async (regNumber) => {
+        setMarkingPresent(regNumber)
+        try {
+            await markAttendance(regNumber)
+            setAttendanceSet(prev => new Set([...prev, String(regNumber).trim()]))
+            showMessage(`Marked ${regNumber} as present ✅`)
+        } catch (error) {
+            if (error.message === 'ALREADY_CHECKED_IN') {
+                showMessage(`${regNumber} is already marked present`, 'error')
+                setAttendanceSet(prev => new Set([...prev, String(regNumber).trim()]))
+            } else if (error.message === 'NOT_FOUND') {
+                showMessage(`Registration ${regNumber} not found`, 'error')
+            } else {
+                showMessage('Failed to mark present: ' + error.message, 'error')
+            }
+        }
+        setMarkingPresent('')
+    }
+
+    const handleRemovePresent = async (regNumber) => {
+        setMarkingPresent(regNumber)
+        try {
+            await removeAttendance(regNumber)
+            setAttendanceSet(prev => {
+                const next = new Set(prev)
+                next.delete(String(regNumber).trim())
+                return next
+            })
+            showMessage(`Removed attendance for ${regNumber}`)
+        } catch (error) {
+            showMessage('Failed to remove: ' + error.message, 'error')
+        }
+        setMarkingPresent('')
     }
 
     const handleUpdateLimit = async () => {
@@ -264,6 +304,7 @@ function Dashboard() {
                                     <th>Section</th>
                                     <th>Email</th>
                                     <th>Mobile</th>
+                                    <th>Present</th>
                                     <th>Registered At</th>
                                 </tr>
                             </thead>
@@ -278,6 +319,26 @@ function Dashboard() {
                                         <td>{reg.section}</td>
                                         <td>{reg.email}</td>
                                         <td>{reg.mobile}</td>
+                                        <td className="present-cell">
+                                            {attendanceSet.has(String(reg.reg_number).trim()) ? (
+                                                <button
+                                                    className="present-badge-btn"
+                                                    onClick={() => handleRemovePresent(reg.reg_number)}
+                                                    disabled={markingPresent === reg.reg_number}
+                                                    title="Click to mark absent"
+                                                >
+                                                    {markingPresent === reg.reg_number ? '...' : '✅ Present'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="action-btn mark-present-btn"
+                                                    onClick={() => handleMarkPresent(reg.reg_number)}
+                                                    disabled={markingPresent === reg.reg_number}
+                                                >
+                                                    {markingPresent === reg.reg_number ? '...' : '➕ Mark'}
+                                                </button>
+                                            )}
+                                        </td>
                                         <td>{new Date(reg.created_at).toLocaleString()}</td>
                                     </tr>
                                 ))}

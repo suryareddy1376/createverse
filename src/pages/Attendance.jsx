@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { supabase, getAttendance, markAttendance, clearAttendance, getRegistrations } from '../lib/supabase'
@@ -16,6 +16,8 @@ function Attendance() {
     const [actionLoading, setActionLoading] = useState('')
     const [message, setMessage] = useState({ text: '', type: '' })
     const [scannerEnabled, setScannerEnabled] = useState(true)
+    const [manualRegNumber, setManualRegNumber] = useState('')
+    const [manualLoading, setManualLoading] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -41,8 +43,37 @@ function Attendance() {
         setTimeout(() => setMessage({ text: '', type: '' }), 3000)
     }
 
+    // Debounce: prevent the same barcode from triggering twice rapidly
+    const lastScanRef = useRef({ value: '', time: 0 })
+
     const handleScanSuccess = async (decodedText) => {
-        const regNumber = decodedText.trim()
+        // Sanitize: strip invisible chars, collapse whitespace
+        const regNumber = String(decodedText)
+            .trim()
+            .replace(/[\u0000-\u001F\u007F-\u009F\uFEFF\u200B-\u200D\u2060]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+
+        // Reject empty or obviously invalid scans
+        if (!regNumber || regNumber.length < 2) {
+            setScanResult({
+                type: 'error',
+                student: null,
+                message: `❌ Invalid scan — no readable data detected`
+            })
+            setTimeout(() => setScanResult(null), 3000)
+            return
+        }
+
+        // Debounce: skip if same value scanned within 3 seconds
+        const now = Date.now()
+        if (
+            regNumber === lastScanRef.current.value &&
+            now - lastScanRef.current.time < 3000
+        ) {
+            return // silently skip duplicate rapid scan
+        }
+        lastScanRef.current = { value: regNumber, time: now }
 
         try {
             const result = await markAttendance(regNumber)
@@ -70,6 +101,12 @@ function Attendance() {
                     student: null,
                     message: `⚠️ "${regNumber}" is already checked in`
                 })
+            } else if (error.message === 'INVALID_INPUT') {
+                setScanResult({
+                    type: 'error',
+                    student: null,
+                    message: `❌ Invalid input — could not parse barcode data`
+                })
             } else {
                 setScanResult({
                     type: 'error',
@@ -79,6 +116,19 @@ function Attendance() {
             }
             setTimeout(() => setScanResult(null), 3000)
         }
+    }
+
+    const handleManualEntry = async () => {
+        const regNum = manualRegNumber.trim()
+        if (!regNum) return
+        setManualLoading(true)
+        await handleScanSuccess(regNum)
+        setManualRegNumber('')
+        setManualLoading(false)
+    }
+
+    const handleManualKeyDown = (e) => {
+        if (e.key === 'Enter') handleManualEntry()
     }
 
     const handleClearAttendance = async () => {
@@ -219,6 +269,29 @@ function Attendance() {
                             </motion.div>
                         )}
                     </AnimatePresence>
+
+                    {/* Manual Entry */}
+                    <div className="manual-entry-section">
+                        <h3>Or enter manually</h3>
+                        <div className="manual-entry-row">
+                            <input
+                                type="text"
+                                className="manual-input"
+                                placeholder="Enter Registration Number"
+                                value={manualRegNumber}
+                                onChange={(e) => setManualRegNumber(e.target.value)}
+                                onKeyDown={handleManualKeyDown}
+                                disabled={manualLoading}
+                            />
+                            <button
+                                className="action-btn mark-present"
+                                onClick={handleManualEntry}
+                                disabled={manualLoading || !manualRegNumber.trim()}
+                            >
+                                {manualLoading ? '...' : '✅ Mark Present'}
+                            </button>
+                        </div>
+                    </div>
                 </motion.div>
 
                 {/* Stats & Actions */}

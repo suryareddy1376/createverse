@@ -165,6 +165,57 @@
     color: var(--text-medium);
 }
 
+/* Manual Entry */
+.manual-entry-section {
+    width: 100%;
+    text-align: center;
+    border-top: 1px solid rgba(155, 143, 206, 0.15);
+    padding-top: var(--space-lg);
+}
+
+.manual-entry-section h3 {
+    font-size: var(--font-size-sm);
+    color: var(--text-medium);
+    font-weight: 500;
+    margin-bottom: var(--space-md);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.manual-entry-row {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.manual-input {
+    padding: var(--space-sm) var(--space-lg);
+    border: 1px solid rgba(155, 143, 206, 0.3);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    background: rgba(255, 255, 255, 0.9);
+    min-width: 220px;
+    transition: all var(--transition-normal);
+}
+
+.manual-input:focus {
+    outline: none;
+    border-color: #26A69A;
+    box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.2);
+}
+
+.manual-input:disabled {
+    opacity: 0.6;
+}
+
+.action-btn.mark-present {
+    background: linear-gradient(135deg, #26A69A 0%, #00897B 100%);
+    color: white;
+}
+
 /* Stats Bar */
 .att-stats-bar {
     display: flex;
