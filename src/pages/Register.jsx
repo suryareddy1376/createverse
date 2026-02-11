@@ -135,7 +135,7 @@ function Register() {
             setTouched({})
         } catch (error) {
             console.error('Registration failed:', error)
-            alert('Registration failed. Please try again.')
+            alert(error.message || 'Registration failed. Please try again.')
         }
 
         setLoading(false)

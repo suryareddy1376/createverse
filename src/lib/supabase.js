@@ -25,7 +25,19 @@ export async function submitRegistration(data) {
         }])
         .select()
 
-    if (error) throw error
+    if (error) {
+        // Handle duplicate registration errors
+        if (error.code === '23505') {
+            if (error.message.includes('unique_reg_number')) {
+                throw new Error('This registration number is already registered.')
+            }
+            if (error.message.includes('unique_email')) {
+                throw new Error('This email is already registered.')
+            }
+            throw new Error('You have already registered.')
+        }
+        throw error
+    }
     return result
 }
 
@@ -93,18 +105,28 @@ export async function setRegistrationLimit(limit) {
     if (error) throw error
 }
 
+// Count-only query — does NOT expose any registration data
+export async function getRegistrationCount() {
+    const { count, error } = await supabase
+        .from('registrations')
+        .select('*', { count: 'exact', head: true })
+
+    if (error) throw error
+    return count || 0
+}
+
 export async function checkCanRegister() {
-    const [limit, registrations] = await Promise.all([
+    const [limit, count] = await Promise.all([
         getRegistrationLimit(),
-        getRegistrations()
+        getRegistrationCount()
     ])
 
     // 0 means unlimited
-    if (limit === 0) return { canRegister: true, currentCount: registrations.length, limit: 0 }
+    if (limit === 0) return { canRegister: true, currentCount: count, limit: 0 }
 
     return {
-        canRegister: registrations.length < limit,
-        currentCount: registrations.length,
+        canRegister: count < limit,
+        currentCount: count,
         limit
     }
 }
