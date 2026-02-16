@@ -110,10 +110,14 @@ function Dashboard() {
             teams.forEach((team, teamIndex) => {
                 if (team.team_members && team.team_members.length > 0) {
                     team.team_members.forEach((member, memberIndex) => {
+                        // Check attendance status
+                        const isPresent = attendanceSet.has(String(member.reg_number).trim())
+
                         excelData.push({
                             'Team ID': teamIndex + 1,
                             'Team Name': team.team_name,
                             'Role': member.is_leader ? 'Leader' : 'Member',
+                            'Attendance': isPresent ? 'Present' : 'Absent', // Added Attendance Column
                             'Full Name': member.full_name,
                             'Reg Number': member.reg_number,
                             'Gender': member.gender,
@@ -131,6 +135,7 @@ function Dashboard() {
                         'Team ID': teamIndex + 1,
                         'Team Name': team.team_name,
                         'Role': '-',
+                        'Attendance': '-',
                         'Full Name': '-',
                         'Reg Number': '-',
                         // ... fill others

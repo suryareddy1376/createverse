@@ -209,9 +209,9 @@
 
 .event-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--space-lg);
-    max-width: 400px;
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -310,10 +310,7 @@
 
 /* ===== RESPONSIVE - TABLET ===== */
 @media (min-width: 768px) {
-    .event-grid {
-        grid-template-columns: repeat(3, 1fr);
-        max-width: none;
-    }
+    /* .event-grid handled by auto-fit */
 
     .hero-logo {
         max-width: 400px;
