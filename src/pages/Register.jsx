@@ -57,10 +57,12 @@ function Register() {
         if (!strVal) return 'Required'
 
         if (name === 'email') {
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(strVal)) return 'Invalid email format'
+            // Stricter email validation
+            if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(strVal)) return 'Invalid email address'
         }
         if (name === 'mobile') {
-            if (!/^\d{10}$/.test(strVal)) return 'Must be 10 digits'
+            // India specific mobile validation (starts with 6-9, 10 digits)
+            if (!/^[6-9]\d{9}$/.test(strVal)) return 'Invalid mobile number (must be 10 digits starting with 6-9)'
         }
         return ''
     }

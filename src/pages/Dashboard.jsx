@@ -189,6 +189,9 @@ function Dashboard() {
                         <p>Manage Team Registrations</p>
                     </div>
                     <div className="header-actions">
+                        <button className="nav-btn" onClick={() => navigate('/attendance')} style={{ marginRight: '1rem' }}>
+                            📷 Attendance
+                        </button>
                         <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
                     </div>
                 </motion.div>
@@ -200,6 +203,9 @@ function Dashboard() {
                 )}
 
                 <motion.div className="dashboard-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+                    <button className="action-btn" onClick={() => navigate('/attendance')} style={{ backgroundColor: '#646cff' }}>
+                        📷 Attendance Check
+                    </button>
                     <button className={`action-btn ${isOpen ? 'open' : 'closed'}`} onClick={handleToggleRegistrations} disabled={actionLoading === 'toggle'}>
                         {actionLoading === 'toggle' ? '...' : isOpen ? '🟢 Registrations Open' : '🔴 Registrations Closed'}
                     </button>
@@ -271,18 +277,24 @@ function Dashboard() {
                                                         <div className="members-details">
                                                             <h4>Team Members:</h4>
                                                             <div className="members-grid-display">
-                                                                {team.team_members?.map((member, idx) => (
-                                                                    <div key={member.id || idx} className="member-card-display">
-                                                                        <div className="member-role">
-                                                                            {member.is_leader ? '👑 Leader' : `👤 Member ${idx + 1}`}
+                                                                {team.team_members?.map((member, idx) => {
+                                                                    const isPresent = attendanceSet.has(String(member.reg_number).trim())
+                                                                    return (
+                                                                        <div key={member.id || idx} className={`member-card-display ${isPresent ? 'present' : 'absent'}`}>
+                                                                            <div className="member-role">
+                                                                                {member.is_leader ? '👑 Leader' : `👤 Member ${idx + 1}`}
+                                                                                <span className={`status-badge ${isPresent ? 'present' : 'absent'}`}>
+                                                                                    {isPresent ? '✅ Present' : '❌ Absent'}
+                                                                                </span>
+                                                                            </div>
+                                                                            <p><strong>Name:</strong> {member.full_name}</p>
+                                                                            <p><strong>Reg Number:</strong> {member.reg_number}</p>
+                                                                            <p><strong>Dept:</strong> {member.dept} - {member.year} - {member.section}</p>
+                                                                            <p><strong>Email:</strong> {member.email}</p>
+                                                                            <p><strong>Mobile:</strong> {member.mobile}</p>
                                                                         </div>
-                                                                        <p><strong>Name:</strong> {member.full_name}</p>
-                                                                        <p><strong>Reg Number:</strong> {member.reg_number}</p>
-                                                                        <p><strong>Dept:</strong> {member.dept} - {member.year} - {member.section}</p>
-                                                                        <p><strong>Email:</strong> {member.email}</p>
-                                                                        <p><strong>Mobile:</strong> {member.mobile}</p>
-                                                                    </div>
-                                                                ))}
+                                                                    )
+                                                                })}
                                                             </div>
                                                         </div>
                                                     </td>

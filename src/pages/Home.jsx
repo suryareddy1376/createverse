@@ -8,8 +8,8 @@ const logoUrl = '/kare-logo.png'
 
 function Home() {
     const eventDetails = [
-        { icon: '📅', title: 'Date & Time', content: ['14th February', '11:00 AM'] },
-        { icon: '📍', title: 'Venue', content: ['9th Block'] },
+        { icon: '📅', title: 'Date & Time', content: ['March 5th', '10:00 AM'] },
+        { icon: '📍', title: 'Venue', content: ['8th Block Seminar Hall'] },
         { icon: '🎤', title: 'Chief Guest', content: ['Hari Prasad'] }
     ]
 

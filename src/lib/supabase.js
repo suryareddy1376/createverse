@@ -63,9 +63,9 @@ export async function getRegistrations() {
 
 export async function deleteAllRegistrations() {
     const { error } = await supabase
-        .from('registrations')
+        .from('teams')
         .delete()
-        .neq('id', 0) // Delete all rows
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all rows using UUID safe check
 
     if (error) throw error
 }
@@ -160,11 +160,14 @@ function sanitizeRegNumber(raw) {
         .trim()
 }
 
+// Updated to query team_members instead of registrations
 export async function lookupRegistration(regNumber) {
     const cleanRegNumber = sanitizeRegNumber(regNumber)
     if (!cleanRegNumber) return null
+
+    // We need to query team_members now
     const { data, error } = await supabase
-        .from('registrations')
+        .from('team_members')
         .select('full_name, reg_number, dept, year, section')
         .eq('reg_number', cleanRegNumber)
         .single()
@@ -172,6 +175,16 @@ export async function lookupRegistration(regNumber) {
     if (error && error.code === 'PGRST116') return null // Not found
     if (error) throw error
     return data
+}
+
+// Fetch all individual members (for stats/verification)
+export async function getAllMembers() {
+    const { data, error } = await supabase
+        .from('team_members')
+        .select('*')
+
+    if (error) throw error
+    return data || []
 }
 
 export async function markAttendance(regNumber) {
@@ -228,7 +241,7 @@ export async function clearAttendance() {
     const { error } = await supabase
         .from('attendance')
         .delete()
-        .neq('id', 0)
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Updated to UUID safe check
 
     if (error) throw error
 }

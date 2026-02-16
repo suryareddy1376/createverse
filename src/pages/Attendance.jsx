@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { supabase, getAttendance, markAttendance, clearAttendance, getRegistrations } from '../lib/supabase'
+import { supabase, getAttendance, markAttendance, clearAttendance, getAllMembers } from '../lib/supabase'
 import BarcodeScanner from '../components/BarcodeScanner'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
@@ -26,12 +26,12 @@ function Attendance() {
     const loadData = async () => {
         setLoading(true)
         try {
-            const [attendanceData, registrations] = await Promise.all([
+            const [attendanceData, members] = await Promise.all([
                 getAttendance(),
-                getRegistrations()
+                getAllMembers()
             ])
             setAttendance(attendanceData)
-            setTotalRegistered(registrations?.length || 0)
+            setTotalRegistered(members?.length || 0)
         } catch (error) {
             showMessage('Failed to load data: ' + error.message, 'error')
         }
