@@ -10,41 +10,51 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Registration functions
-export async function submitRegistration(data) {
-    const { data: result, error } = await supabase
-        .from('registrations')
-        .insert([{
-            full_name: data.fullName,
-            reg_number: data.regNumber,
-            dept: data.dept,
-            year: data.year,
-            section: data.section,
-            email: data.email,
-            mobile: data.mobile,
-            created_at: new Date().toISOString()
-        }])
+export async function submitRegistration(teamData, members) {
+    // 1. Insert Team
+    const { data: team, error: teamError } = await supabase
+        .from('teams')
+        .insert([{ team_name: teamData.teamName }])
         .select()
+        .single()
 
-    if (error) {
-        // Handle duplicate registration errors
-        if (error.code === '23505') {
-            if (error.message.includes('unique_reg_number')) {
-                throw new Error('This registration number is already registered.')
-            }
-            if (error.message.includes('unique_email')) {
-                throw new Error('This email is already registered.')
-            }
-            throw new Error('You have already registered.')
-        }
-        throw error
+    if (teamError) throw teamError
+
+    // 2. Prepare Member Data
+    const membersToInsert = members.map((member, index) => ({
+        team_id: team.id,
+        full_name: member.fullName,
+        reg_number: member.regNumber,
+        gender: member.gender,
+        dept: member.dept,
+        year: member.year,
+        section: member.section,
+        email: member.email,
+        mobile: member.mobile,
+        is_leader: index === 0 // First member is leader
+    }))
+
+    // 3. Insert Members
+    const { error: membersError } = await supabase
+        .from('team_members')
+        .insert(membersToInsert)
+
+    if (membersError) {
+        // Rollback team creation if members fail (manual rollback since Supabase-js doesn't support transactions easily in client)
+        await supabase.from('teams').delete().eq('id', team.id)
+        throw membersError
     }
-    return result
+
+    return team
 }
 
 export async function getRegistrations() {
     const { data, error } = await supabase
-        .from('registrations')
-        .select('*')
+        .from('teams')
+        .select(`
+            *,
+            team_members (*)
+        `)
         .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -110,9 +120,12 @@ export async function setRegistrationLimit(limit) {
 
 // AFTER (calls the secure function — returns count only):
 export async function getRegistrationCount() {
-    const { data, error } = await supabase.rpc('get_registration_count')
+    const { count, error } = await supabase
+        .from('teams')
+        .select('*', { count: 'exact', head: true })
+
     if (error) throw error
-    return data || 0
+    return count || 0
 }
 
 export async function checkCanRegister() {

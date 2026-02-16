@@ -137,6 +137,86 @@
     justify-content: center;
 }
 
+/* ===== MEMBERS ACCORDION ===== */
+.members-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.member-section {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.member-section.expanded {
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: var(--shadow-clay-card);
+}
+
+.member-header {
+    padding: var(--space-md) var(--space-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition-fast);
+}
+
+.member-header:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.member-header h3 {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.member-preview {
+    font-weight: 400;
+    color: var(--text-medium);
+    font-size: var(--font-size-sm);
+}
+
+.toggle-icon {
+    font-size: var(--font-size-lg);
+    color: var(--text-light);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+    transition: all var(--transition-fast);
+}
+
+.member-section.expanded .toggle-icon {
+    background: var(--accent);
+    color: white;
+    transform: rotate(180deg);
+}
+
+.member-content {
+    overflow: hidden;
+}
+
+.form-grid {
+    padding: var(--space-md) var(--space-lg);
+    padding-top: 0;
+    display: grid;
+    gap: var(--space-md);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (min-width: 768px) {
     .register-card {
@@ -145,6 +225,17 @@
 
     .register-header h1 {
         font-size: var(--font-size-4xl);
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .form-grid .form-group:nth-last-child(1),
+    .form-grid .form-group:nth-last-child(2) {
+        /* Make email and mobile full width or grounded nicely? */
+        /* Actually keep them grid, maybe span full if needed. */
+        /* Let's keep them 1fr 1fr for now */
     }
 }
 

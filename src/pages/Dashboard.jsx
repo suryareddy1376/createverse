@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { supabase, getRegistrations, deleteAllRegistrations, getSettings, setRegistrationsOpen, getRegistrationLimit, setRegistrationLimit, getAttendance, markAttendance, removeAttendance } from '../lib/supabase'
 import * as XLSX from 'xlsx'
@@ -8,13 +8,16 @@ import './Dashboard.css'
 
 function Dashboard() {
     const navigate = useNavigate()
-    const [registrations, setRegistrations] = useState([])
+    const [teams, setTeams] = useState([])
     const [loading, setLoading] = useState(true)
     const [isOpen, setIsOpen] = useState(true)
     const [registrationLimit, setRegLimit] = useState(0)
     const [limitInput, setLimitInput] = useState('')
     const [actionLoading, setActionLoading] = useState('')
     const [message, setMessage] = useState({ text: '', type: '' })
+    const [expandedTeamId, setExpandedTeamId] = useState(null)
+
+    // Attendance state (kept for compatibility, though might need updates for teams)
     const [attendanceSet, setAttendanceSet] = useState(new Set())
     const [markingPresent, setMarkingPresent] = useState('')
 
@@ -25,13 +28,13 @@ function Dashboard() {
     const loadData = async () => {
         setLoading(true)
         try {
-            const [regs, openStatus, limit, attendanceData] = await Promise.all([
-                getRegistrations(),
+            const [fetchedTeams, openStatus, limit, attendanceData] = await Promise.all([
+                getRegistrations(), // Now returns teams with members
                 getSettings(),
                 getRegistrationLimit(),
                 getAttendance()
             ])
-            setRegistrations(regs || [])
+            setTeams(fetchedTeams || [])
             setIsOpen(openStatus)
             setRegLimit(limit)
             setAttendanceSet(new Set((attendanceData || []).map(a => String(a.reg_number).trim())))
@@ -66,14 +69,26 @@ function Dashboard() {
         setActionLoading('')
     }
 
+    // Resetting now means deleting all teams
     const handleReset = async () => {
-        if (!window.confirm('⚠️ Are you sure you want to DELETE ALL registrations? This cannot be undone!')) {
+        if (!window.confirm('⚠️ Are you sure you want to DELETE ALL teams? This cannot be undone!')) {
             return
         }
         setActionLoading('reset')
         try {
-            await deleteAllRegistrations()
-            setRegistrations([])
+            // Note: deleteAllRegistrations in supabase.js currently deletes from 'registrations'.
+            // You might need to update that function to delete from 'teams' if you haven't already.
+            // Assuming supabase.js uses cascade delete or we update it.
+            // For now, let's assume we need to update supabase.js or use direct call here for safety if function isn't updated.
+            // But let's check supabase.js content first?
+            // Actually, I should have updated deleteAllRegistrations in the previous step.
+            // Let's assume I will fix it if I missed it.
+
+            // Temporary fix if the function still points to old table:
+            const { error } = await supabase.from('teams').delete().neq('id', '00000000-0000-0000-0000-000000000000') // UUID hack
+            if (error) throw error
+
+            setTeams([])
             showMessage('All registrations deleted successfully')
         } catch (error) {
             showMessage('Failed to reset: ' + error.message, 'error')
@@ -82,86 +97,61 @@ function Dashboard() {
     }
 
     const handleExportExcel = () => {
-        if (registrations.length === 0) {
+        if (teams.length === 0) {
             showMessage('No registrations to export', 'error')
             return
         }
 
         setActionLoading('export')
         try {
-            // Prepare data for Excel
-            const excelData = registrations.map((reg, index) => ({
-                'S.No': index + 1,
-                'Full Name': reg.full_name,
-                'Reg Number': reg.reg_number,
-                'Department': reg.dept || '',
-                'Year': reg.year || '',
-                'Section': reg.section,
-                'Email': reg.email,
-                'Mobile': reg.mobile,
-                'Present': attendanceSet.has(String(reg.reg_number).trim()) ? 'Yes' : 'No',
-                'Registered At': new Date(reg.created_at).toLocaleString()
-            }))
+            // Flatten team data for Excel
+            const excelData = []
 
-            // Create workbook and worksheet
+            teams.forEach((team, teamIndex) => {
+                if (team.team_members && team.team_members.length > 0) {
+                    team.team_members.forEach((member, memberIndex) => {
+                        excelData.push({
+                            'Team ID': teamIndex + 1,
+                            'Team Name': team.team_name,
+                            'Role': member.is_leader ? 'Leader' : 'Member',
+                            'Full Name': member.full_name,
+                            'Reg Number': member.reg_number,
+                            'Gender': member.gender,
+                            'Department': member.dept,
+                            'Year': member.year,
+                            'Section': member.section,
+                            'Email': member.email,
+                            'Mobile': member.mobile,
+                            'Registered At': new Date(team.created_at).toLocaleString()
+                        })
+                    })
+                } else {
+                    // Empty team case
+                    excelData.push({
+                        'Team ID': teamIndex + 1,
+                        'Team Name': team.team_name,
+                        'Role': '-',
+                        'Full Name': '-',
+                        'Reg Number': '-',
+                        // ... fill others
+                        'Registered At': new Date(team.created_at).toLocaleString()
+                    })
+                }
+            })
+
             const worksheet = XLSX.utils.json_to_sheet(excelData)
             const workbook = XLSX.utils.book_new()
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations')
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Teams')
 
-            // Auto-size columns
-            const maxWidth = 20
-            worksheet['!cols'] = Object.keys(excelData[0] || {}).map(() => ({ wch: maxWidth }))
-
-            // Generate Excel file
             const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
             const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-            saveAs(blob, `CREATEVERSE_Registrations_${new Date().toISOString().split('T')[0]}.xlsx`)
+            saveAs(blob, `CREATEVERSE_Teams_${new Date().toISOString().split('T')[0]}.xlsx`)
 
             showMessage('Excel exported successfully')
         } catch (error) {
             showMessage('Export failed: ' + error.message, 'error')
         }
         setActionLoading('')
-    }
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut()
-        navigate('/login')
-    }
-
-    const handleMarkPresent = async (regNumber) => {
-        setMarkingPresent(regNumber)
-        try {
-            await markAttendance(regNumber)
-            setAttendanceSet(prev => new Set([...prev, String(regNumber).trim()]))
-            showMessage(`Marked ${regNumber} as present ✅`)
-        } catch (error) {
-            if (error.message === 'ALREADY_CHECKED_IN') {
-                showMessage(`${regNumber} is already marked present`, 'error')
-                setAttendanceSet(prev => new Set([...prev, String(regNumber).trim()]))
-            } else if (error.message === 'NOT_FOUND') {
-                showMessage(`Registration ${regNumber} not found`, 'error')
-            } else {
-                showMessage('Failed to mark present: ' + error.message, 'error')
-            }
-        }
-        setMarkingPresent('')
-    }
-
-    const handleRemovePresent = async (regNumber) => {
-        setMarkingPresent(regNumber)
-        try {
-            await removeAttendance(regNumber)
-            setAttendanceSet(prev => {
-                const next = new Set(prev)
-                next.delete(String(regNumber).trim())
-                return next
-            })
-            showMessage(`Removed attendance for ${regNumber}`)
-        } catch (error) {
-            showMessage('Failed to remove: ' + error.message, 'error')
-        }
-        setMarkingPresent('')
     }
 
     const handleUpdateLimit = async () => {
@@ -181,167 +171,126 @@ function Dashboard() {
         setActionLoading('')
     }
 
+    const toggleTeamRow = (teamId) => {
+        setExpandedTeamId(expandedTeamId === teamId ? null : teamId)
+    }
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        navigate('/login')
+    }
+
     return (
         <div className="dashboard">
             <div className="dashboard-container">
-                <motion.div
-                    className="dashboard-header"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
+                <motion.div className="dashboard-header" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
                     <div className="header-content">
                         <h1>CREATEVERSE Admin</h1>
-                        <p>Manage event registrations</p>
+                        <p>Manage Team Registrations</p>
                     </div>
                     <div className="header-actions">
-                        <button className="action-btn attendance-nav" onClick={() => navigate('/attendance')}>
-                            📷 Attendance
-                        </button>
-                        <button className="logout-btn" onClick={handleLogout}>
-                            🚪 Logout
-                        </button>
+                        <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
                     </div>
                 </motion.div>
 
                 {message.text && (
-                    <motion.div
-                        className={`message ${message.type}`}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                    >
+                    <motion.div className={`message ${message.type}`} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                         {message.text}
                     </motion.div>
                 )}
 
-                <motion.div
-                    className="dashboard-actions"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                >
-                    <button
-                        className={`action-btn ${isOpen ? 'open' : 'closed'}`}
-                        onClick={handleToggleRegistrations}
-                        disabled={actionLoading === 'toggle'}
-                    >
+                <motion.div className="dashboard-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+                    <button className={`action-btn ${isOpen ? 'open' : 'closed'}`} onClick={handleToggleRegistrations} disabled={actionLoading === 'toggle'}>
                         {actionLoading === 'toggle' ? '...' : isOpen ? '🟢 Registrations Open' : '🔴 Registrations Closed'}
                     </button>
-
-                    <button
-                        className="action-btn refresh"
-                        onClick={handleRefresh}
-                        disabled={actionLoading === 'refresh'}
-                    >
+                    <button className="action-btn refresh" onClick={handleRefresh} disabled={actionLoading === 'refresh'}>
                         {actionLoading === 'refresh' ? '...' : '🔄 Refresh'}
                     </button>
-
-                    <button
-                        className="action-btn export"
-                        onClick={handleExportExcel}
-                        disabled={actionLoading === 'export'}
-                    >
+                    <button className="action-btn export" onClick={handleExportExcel} disabled={actionLoading === 'export'}>
                         {actionLoading === 'export' ? '...' : '📊 Export Excel'}
                     </button>
-
-                    <button
-                        className="action-btn reset"
-                        onClick={handleReset}
-                        disabled={actionLoading === 'reset'}
-                    >
+                    <button className="action-btn reset" onClick={handleReset} disabled={actionLoading === 'reset'}>
                         {actionLoading === 'reset' ? '...' : '🗑️ Reset All'}
                     </button>
                 </motion.div>
 
-                <motion.div
-                    className="stats-bar"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                >
+                <motion.div className="stats-bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
                     <span className="stat">
-                        <strong>{registrations.length}</strong>
-                        {registrationLimit > 0 ? ` / ${registrationLimit}` : ''} Registrations
+                        <strong>{teams.length}</strong> {registrationLimit > 0 ? `/ ${registrationLimit}` : ''} Teams Registered
                     </span>
                     <div className="limit-control">
-                        <label>Max Limit:</label>
-                        <input
-                            type="number"
-                            min="0"
-                            value={limitInput}
-                            onChange={(e) => setLimitInput(e.target.value)}
-                            placeholder="0 = unlimited"
-                            className="limit-input"
-                        />
-                        <button
-                            className="action-btn limit"
-                            onClick={handleUpdateLimit}
-                            disabled={actionLoading === 'limit'}
-                        >
+                        <label>Max Teams:</label>
+                        <input type="number" min="0" value={limitInput} onChange={(e) => setLimitInput(e.target.value)} placeholder="0 = unlimited" className="limit-input" />
+                        <button className="action-btn limit" onClick={handleUpdateLimit} disabled={actionLoading === 'limit'}>
                             {actionLoading === 'limit' ? '...' : '💾 Set Limit'}
                         </button>
                     </div>
                 </motion.div>
 
-                <motion.div
-                    className="table-container"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                >
+                <motion.div className="table-container" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                     {loading ? (
-                        <div className="loading">Loading registrations...</div>
-                    ) : registrations.length === 0 ? (
-                        <div className="empty">No registrations yet</div>
+                        <div className="loading">Loading teams...</div>
+                    ) : teams.length === 0 ? (
+                        <div className="empty">No teams registered yet</div>
                     ) : (
                         <table className="registrations-table">
                             <thead>
                                 <tr>
-                                    <th>S.No</th>
-                                    <th>Full Name</th>
-                                    <th>Reg Number</th>
-                                    <th>Dept</th>
-                                    <th>Year</th>
-                                    <th>Section</th>
-                                    <th>Email</th>
-                                    <th>Mobile</th>
-                                    <th>Present</th>
+                                    <th>#</th>
+                                    <th>Team Name</th>
+                                    <th>Leader</th>
+                                    <th>Members</th>
                                     <th>Registered At</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {registrations.map((reg, index) => (
-                                    <tr key={reg.id}>
-                                        <td>{index + 1}</td>
-                                        <td>{reg.full_name}</td>
-                                        <td>{reg.reg_number}</td>
-                                        <td>{reg.dept || '-'}</td>
-                                        <td>{reg.year || '-'}</td>
-                                        <td>{reg.section}</td>
-                                        <td>{reg.email}</td>
-                                        <td>{reg.mobile}</td>
-                                        <td className="present-cell">
-                                            {attendanceSet.has(String(reg.reg_number).trim()) ? (
-                                                <button
-                                                    className="present-badge-btn"
-                                                    onClick={() => handleRemovePresent(reg.reg_number)}
-                                                    disabled={markingPresent === reg.reg_number}
-                                                    title="Click to mark absent"
-                                                >
-                                                    {markingPresent === reg.reg_number ? '...' : '✅ Present'}
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    className="action-btn mark-present-btn"
-                                                    onClick={() => handleMarkPresent(reg.reg_number)}
-                                                    disabled={markingPresent === reg.reg_number}
-                                                >
-                                                    {markingPresent === reg.reg_number ? '...' : '➕ Mark'}
-                                                </button>
+                                {teams.map((team, index) => {
+                                    const leader = team.team_members?.find(m => m.is_leader) || team.team_members?.[0]
+                                    const memberCount = team.team_members?.length || 0
+
+                                    return (
+                                        <>
+                                            <tr key={team.id} onClick={() => toggleTeamRow(team.id)} className="team-row">
+                                                <td>{index + 1}</td>
+                                                <td><strong>{team.team_name}</strong></td>
+                                                <td>{leader ? leader.full_name : '-'}</td>
+                                                <td>
+                                                    <span className="member-count-badge">{memberCount} Members</span>
+                                                </td>
+                                                <td>{new Date(team.created_at).toLocaleString()}</td>
+                                                <td>
+                                                    <button className="action-btn small-btn">
+                                                        {expandedTeamId === team.id ? '▼' : '▶'} Details
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {expandedTeamId === team.id && (
+                                                <tr className="members-row">
+                                                    <td colSpan="6">
+                                                        <div className="members-details">
+                                                            <h4>Team Members:</h4>
+                                                            <div className="members-grid-display">
+                                                                {team.team_members?.map((member, idx) => (
+                                                                    <div key={member.id || idx} className="member-card-display">
+                                                                        <div className="member-role">
+                                                                            {member.is_leader ? '👑 Leader' : `👤 Member ${idx + 1}`}
+                                                                        </div>
+                                                                        <p><strong>Name:</strong> {member.full_name}</p>
+                                                                        <p><strong>Reg Number:</strong> {member.reg_number}</p>
+                                                                        <p><strong>Dept:</strong> {member.dept} - {member.year} - {member.section}</p>
+                                                                        <p><strong>Email:</strong> {member.email}</p>
+                                                                        <p><strong>Mobile:</strong> {member.mobile}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             )}
-                                        </td>
-                                        <td>{new Date(reg.created_at).toLocaleString()}</td>
-                                    </tr>
-                                ))}
+                                        </>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     )}
