@@ -1,21 +1,31 @@
 /* ===== REGISTER PAGE ===== */
-
 .register-page {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-xl) var(--space-lg);
+    padding: var(--space-md);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    /* You might want to match Home page background if it has one, 
+       otherwise this is a neutral pleasant background or use the one from Home.css if it exists globally */
 }
+
+/* Reuse the blob background from App.jsx if visible, but ensuring card z-index is higher */
 
 .register-card {
     background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(20px);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
+    /* Slightly smaller radius for mobile */
     box-shadow: var(--shadow-clay);
-    padding: var(--space-xl);
+    padding: var(--space-lg);
+    /* Reduced padding for mobile */
     width: 100%;
-    max-width: 480px;
+    max-width: 100%;
+    /* Full width on mobile */
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
 }
 
 .back-link {
@@ -25,8 +35,9 @@
     color: var(--text-medium);
     font-size: var(--font-size-sm);
     font-weight: 500;
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-md);
     transition: color var(--transition-fast);
+    text-decoration: none;
 }
 
 .back-link:hover {
@@ -35,22 +46,24 @@
 
 .register-header {
     text-align: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
 }
 
 .register-header h1 {
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-2xl);
+    /* Smaller font for mobile */
     font-weight: 800;
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin-bottom: var(--space-xs);
+    line-height: 1.2;
 }
 
 .register-header p {
     color: var(--text-medium);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
 }
 
 /* ===== FORM STYLES ===== */
@@ -85,7 +98,8 @@
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: var(--space-2xs);
+    /* Tighter gap for mobile */
 }
 
 .form-label {
@@ -100,7 +114,8 @@
 
 .clay-input {
     width: 100%;
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-sm) var(--space-md);
+    /* Reduced padding for mobile */
     font-family: var(--font-family);
     font-size: var(--font-size-md);
     color: var(--text-dark);
@@ -129,6 +144,7 @@
     color: #d32f2f;
     font-size: var(--font-size-xs);
     font-weight: 500;
+    margin-top: 4px;
 }
 
 .form-actions {
@@ -147,18 +163,20 @@
 
 .member-section {
     background: rgba(255, 255, 255, 0.4);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     overflow: hidden;
     transition: all var(--transition-normal);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .member-section.expanded {
     background: rgba(255, 255, 255, 0.6);
     box-shadow: var(--shadow-clay-card);
+    border-color: rgba(255, 255, 255, 0.6);
 }
 
 .member-header {
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-md);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -178,20 +196,26 @@
     margin: 0;
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    flex-wrap: wrap;
+    /* Allow wrapping on very small screens */
+    gap: var(--space-xs);
 }
 
 .member-preview {
     font-weight: 400;
     color: var(--text-medium);
     font-size: var(--font-size-sm);
+    display: block;
+    /* Ensure it stays readable */
 }
 
 .toggle-icon {
     font-size: var(--font-size-lg);
     color: var(--text-light);
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    /* Prevent shrinking */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -211,62 +235,97 @@
 }
 
 .form-grid {
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-md);
     padding-top: 0;
-    display: grid;
+    display: flex;
+    /* Stack vertically on mobile */
+    flex-direction: column;
     gap: var(--space-md);
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== CLOSED STATE ===== */
+.loading-status {
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--text-medium);
+    font-weight: 500;
+}
+
+.closed-card {
+    text-align: center;
+    padding: var(--space-xl) var(--space-lg);
+}
+
+.closed-message {
+    padding: var(--space-lg) 0;
+}
+
+.closed-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: var(--space-md);
+}
+
+.closed-message h2 {
+    color: var(--text-dark);
+    margin-bottom: var(--space-md);
+    font-size: var(--font-size-xl);
+}
+
+.closed-message p {
+    color: var(--text-medium);
+    max-width: 100%;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* ===== RESPONSIVE - TABLET & DESKTOP ===== */
 @media (min-width: 768px) {
+    .register-page {
+        padding: var(--space-xl) var(--space-lg);
+    }
+
     .register-card {
         padding: var(--space-2xl);
+        border-radius: var(--radius-xl);
+        max-width: 900px;
+        /* Wider card for desktop to fit grid */
     }
 
     .register-header h1 {
         font-size: var(--font-size-4xl);
     }
 
+    .register-header p {
+        font-size: var(--font-size-lg);
+    }
+
     .form-grid {
+        display: grid;
         grid-template-columns: 1fr 1fr;
+        /* Two columns */
+        gap: var(--space-lg);
+        padding: var(--space-lg);
+        padding-top: 0;
     }
 
-    .form-grid .form-group:nth-last-child(1),
-    .form-grid .form-group:nth-last-child(2) {
-        /* Make email and mobile full width or grounded nicely? */
-        /* Actually keep them grid, maybe span full if needed. */
-        /* Let's keep them 1fr 1fr for now */
+    .form-group {
+        gap: var(--space-xs);
     }
-}
 
-/* ===== CLOSED STATE ===== */
-.loading-status {
-    padding: var(--space-2xl);
-    text-align: center;
-    color: var(--text-medium);
-}
+    .clay-input {
+        padding: var(--space-md) var(--space-lg);
+    }
 
-.closed-card {
-    text-align: center;
-}
+    .member-header h3 {
+        gap: var(--space-sm);
+    }
 
-.closed-message {
-    padding: var(--space-xl) 0;
-}
+    .closed-icon {
+        font-size: 4rem;
+    }
 
-.closed-icon {
-    font-size: 4rem;
-    display: block;
-    margin-bottom: var(--space-lg);
-}
-
-.closed-message h2 {
-    color: var(--text-dark);
-    margin-bottom: var(--space-md);
-}
-
-.closed-message p {
-    color: var(--text-medium);
-    max-width: 300px;
-    margin: 0 auto;
+    .closed-message p {
+        max-width: 400px;
+    }
 }

@@ -70,6 +70,25 @@ export async function deleteAllRegistrations() {
     if (error) throw error
 }
 
+export async function wipeAllData() {
+    // 1. Delete Attendance
+    // We use .not('id', 'is', null) which works for both UUID and BigInt/Int IDs
+    const { error: attError } = await supabase
+        .from('attendance')
+        .delete()
+        .not('id', 'is', null)
+
+    if (attError) throw attError
+
+    // 2. Delete Teams (cascades to team_members)
+    const { error: teamError } = await supabase
+        .from('teams')
+        .delete()
+        .not('id', 'is', null)
+
+    if (teamError) throw teamError
+}
+
 export async function getSettings() {
     const { data, error } = await supabase
         .from('settings')

@@ -380,4 +380,9 @@
         border-right: 1px solid rgba(155, 143, 206, 0.15);
         padding-right: var(--space-xl);
     }
+
+    .hero-content {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
 }

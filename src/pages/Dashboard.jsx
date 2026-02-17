@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { supabase, getRegistrations, deleteAllRegistrations, getSettings, setRegistrationsOpen, getRegistrationLimit, setRegistrationLimit, getAttendance, markAttendance, removeAttendance } from '../lib/supabase'
+import { supabase, getRegistrations, deleteAllRegistrations, wipeAllData, getSettings, setRegistrationsOpen, getRegistrationLimit, setRegistrationLimit, getAttendance, markAttendance, removeAttendance } from '../lib/supabase'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import './Dashboard.css'
@@ -69,29 +69,20 @@ function Dashboard() {
         setActionLoading('')
     }
 
-    // Resetting now means deleting all teams
+    // Resetting deletes all teams AND attendance
     const handleReset = async () => {
-        if (!window.confirm('⚠️ Are you sure you want to DELETE ALL teams? This cannot be undone!')) {
+        if (!window.confirm('⚠️ DANGER ZONE ⚠️\n\nAre you sure you want to DELETE ALL DATA?\n\nThis will permanently delete:\n- All Registered Teams\n- All Team Members\n- All Attendance Records\n\nThis action cannot be undone!')) {
             return
         }
         setActionLoading('reset')
         try {
-            // Note: deleteAllRegistrations in supabase.js currently deletes from 'registrations'.
-            // You might need to update that function to delete from 'teams' if you haven't already.
-            // Assuming supabase.js uses cascade delete or we update it.
-            // For now, let's assume we need to update supabase.js or use direct call here for safety if function isn't updated.
-            // But let's check supabase.js content first?
-            // Actually, I should have updated deleteAllRegistrations in the previous step.
-            // Let's assume I will fix it if I missed it.
-
-            // Temporary fix if the function still points to old table:
-            const { error } = await supabase.from('teams').delete().neq('id', '00000000-0000-0000-0000-000000000000') // UUID hack
-            if (error) throw error
+            await wipeAllData()
 
             setTeams([])
-            showMessage('All registrations deleted successfully')
+            setAttendanceSet(new Set())
+            showMessage('All data (teams, members, attendance) has been wiped successfully')
         } catch (error) {
-            showMessage('Failed to reset: ' + error.message, 'error')
+            showMessage('Failed to complete reset: ' + error.message, 'error')
         }
         setActionLoading('')
     }
@@ -172,6 +163,31 @@ function Dashboard() {
             showMessage(`Registration limit ${newLimit === 0 ? 'removed (unlimited)' : `set to ${newLimit}`}`)
         } catch (error) {
             showMessage('Failed to update limit: ' + error.message, 'error')
+        }
+        setActionLoading('')
+    }
+
+    const handleToggleAttendance = async (member, currentStatus) => {
+        const regNumber = String(member.reg_number).trim()
+        setActionLoading(`att-${regNumber}`)
+        try {
+            if (currentStatus) {
+                // Currently present -> Mark Absent (Remove)
+                await removeAttendance(regNumber)
+                const newSet = new Set(attendanceSet)
+                newSet.delete(regNumber)
+                setAttendanceSet(newSet)
+                showMessage(`Marked ${member.full_name} as Absent`)
+            } else {
+                // Currently absent -> Mark Present (Add)
+                await markAttendance(regNumber)
+                const newSet = new Set(attendanceSet)
+                newSet.add(regNumber)
+                setAttendanceSet(newSet)
+                showMessage(`Marked ${member.full_name} as Present`)
+            }
+        } catch (error) {
+            showMessage(`Failed to update attendance: ${error.message}`, 'error')
         }
         setActionLoading('')
     }
@@ -286,12 +302,28 @@ function Dashboard() {
                                                                     const isPresent = attendanceSet.has(String(member.reg_number).trim())
                                                                     return (
                                                                         <div key={member.id || idx} className={`member-card-display ${isPresent ? 'present' : 'absent'}`}>
-                                                                            <div className="member-role">
-                                                                                {member.is_leader ? '👑 Leader' : `👤 Member ${idx + 1}`}
-                                                                                <span className={`status-badge ${isPresent ? 'present' : 'absent'}`}>
-                                                                                    {isPresent ? '✅ Present' : '❌ Absent'}
-                                                                                </span>
+                                                                            <div className="member-status-actions" style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                                <div className="member-role">
+                                                                                    {member.is_leader ? '👑 Leader' : `👤 Member ${idx + 1}`}
+                                                                                </div>
+                                                                                <button
+                                                                                    className={`action-btn small-btn ${isPresent ? 'absent-btn' : 'present-btn'}`}
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleToggleAttendance(member, isPresent);
+                                                                                    }}
+                                                                                    style={{
+                                                                                        backgroundColor: isPresent ? '#ef4444' : '#10b981',
+                                                                                        padding: '0.25rem 0.5rem',
+                                                                                        fontSize: '0.8rem'
+                                                                                    }}
+                                                                                >
+                                                                                    {isPresent ? 'Mark Absent' : 'Mark Present'}
+                                                                                </button>
                                                                             </div>
+                                                                            <span className={`status-badge ${isPresent ? 'present' : 'absent'}`} style={{ display: 'inline-block', marginBottom: '0.5rem' }}>
+                                                                                {isPresent ? '✅ Present' : '❌ Absent'}
+                                                                            </span>
                                                                             <p><strong>Name:</strong> {member.full_name}</p>
                                                                             <p><strong>Reg Number:</strong> {member.reg_number}</p>
                                                                             <p><strong>Dept:</strong> {member.dept} - {member.year} - {member.section}</p>
